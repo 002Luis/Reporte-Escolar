@@ -1,68 +1,94 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const db = require('../database');
+const supabase = require('../supabase');
 
 const router = express.Router();
 
 const CATEGORIAS = ['Baños', 'Mobiliario', 'Equipos de cómputo', 'Instalaciones eléctricas', 'Limpieza', 'Otros'];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `reporte-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
-  }
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const permitidos = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!permitidos.includes(ext)) {
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    if (!permitidos.includes('.' + ext)) {
       return cb(new Error('Solo se permiten imágenes (jpg, png, gif, webp)'));
     }
     cb(null, true);
   }
 });
 
-router.get('/', (req, res) => {
-  const reportes = db.prepare('SELECT * FROM reportes ORDER BY fecha DESC LIMIT 6').all();
-  res.render('index', { categorias: CATEGORIAS, reportes });
+async function subirImagen(buffer, nombreOriginal) {
+  const ext = nombreOriginal.split('.').pop().toLowerCase();
+  const nombreArchivo = `reporte-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+  const contentType = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp'
+  }[ext] || 'application/octet-stream';
+
+  const { error } = await supabase.storage.from('reportes').upload(nombreArchivo, buffer, {
+    contentType
+  });
+  if (error) throw new Error(`No se pudo subir la imagen: ${error.message}`);
+
+  const { data } = supabase.storage.from('reportes').getPublicUrl(nombreArchivo);
+  return data.publicUrl;
+}
+
+router.get('/', async (req, res) => {
+  const { data: reportes } = await supabase
+    .from('reportes')
+    .select('*')
+    .order('id', { ascending: false })
+    .limit(6);
+  res.render('index', { categorias: CATEGORIAS, reportes: reportes || [] });
 });
 
-router.get('/reportes', (req, res) => {
-  const reportes = db.prepare('SELECT * FROM reportes ORDER BY fecha DESC').all();
-  res.render('mis-reportes', { reportes, categorias: CATEGORIAS });
+router.get('/reportes', async (req, res) => {
+  const { data: reportes } = await supabase
+    .from('reportes')
+    .select('*')
+    .order('id', { ascending: false });
+  res.render('mis-reportes', { reportes: reportes || [], categorias: CATEGORIAS });
 });
 
-router.get('/reportes/:id', (req, res) => {
-  const reporte = db.prepare('SELECT * FROM reportes WHERE id = ?').get(req.params.id);
-  if (!reporte) {
+router.get('/reportes/:id', async (req, res) => {
+  const { data } = await supabase.from('reportes').select('*').eq('id', req.params.id).maybeSingle();
+  if (!data) {
     return res.status(404).render('error', { mensaje: 'El reporte no existe' });
   }
-  res.render('detalle', { reporte });
+  res.render('detalle', { reporte: data });
 });
 
-router.post('/reportes', upload.single('imagen'), (req, res) => {
+router.post('/reportes', upload.single('imagen'), async (req, res) => {
   const { categoria, ubicacion, descripcion } = req.body;
-  const imagen = req.file ? '/uploads/' + req.file.filename : null;
 
   if (!categoria || !ubicacion || !descripcion) {
     return res.status(400).render('error', { mensaje: 'Todos los campos son obligatorios' });
   }
 
+  let imagen = null;
+  if (req.file) {
+    imagen = await subirImagen(req.file.buffer, req.file.originalname);
+  }
+
   const fecha = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
 
-  const info = db
-    .prepare(
-      'INSERT INTO reportes (categoria, ubicacion, descripcion, imagen, estado, fecha) VALUES (?, ?, ?, ?, ?, ?)'
-    )
-    .run(categoria, ubicacion, descripcion, imagen, 'Pendiente', fecha);
+  const { data, error } = await supabase
+    .from('reportes')
+    .insert([{ categoria, ubicacion, descripcion, imagen, estado: 'Pendiente', fecha }])
+    .select()
+    .single();
 
-  res.redirect(`/reportes/${Number(info.lastInsertRowid)}`);
+  if (error) {
+    return res.status(500).render('error', { mensaje: `Error al guardar: ${error.message}` });
+  }
+
+  res.redirect(`/reportes/${data.id}`);
 });
 
 module.exports = router;
