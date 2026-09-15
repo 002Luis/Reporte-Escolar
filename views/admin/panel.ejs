@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Reporte Escolar</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/admin" class="logo">🏫 Panel de administración</a>
+      <nav class="nav">
+        <span class="nav-admin">👤 <%= admin.usuario %></span>
+        <form action="/admin/logout" method="POST" style="display:inline">
+          <button type="submit" class="btn btn-salir">Salir</button>
+        </form>
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    <section class="card">
+      <div class="cabecera-titulo">
+        <h1>Reportes recibidos</h1>
+        <a href="/" class="btn btn-secondary">Ver sitio público</a>
+      </div>
+
+      <div class="filtros">
+        <% estados.forEach(function(e) { %>
+          <a href="/admin?estado=<%= e %>" class="filtro <%= estado === e ? 'activo' : '' %>">
+            <%= e %> (<%= conteos[e] %>)
+          </a>
+        <% }) %>
+        <a href="/admin?estado=Todos" class="filtro <%= estado === 'Todos' ? 'activo' : '' %>">
+          Todos (<%= conteos['Todos'] %>)
+        </a>
+      </div>
+
+      <% if (reportes.length === 0) { %>
+        <p class="vacio">No hay reportes con este filtro.</p>
+      <% } else { %>
+        <div class="lista-admin">
+          <% reportes.forEach(function(r) { %>
+            <article class="reporte-admin">
+              <div class="reporte-admin-cab">
+                <strong>#<%= r.id %> · <%= r.categoria %></strong>
+                <span class="estado estado-<%= r.estado.toLowerCase().replace(/ /g, '-') %>"><%= r.estado %></span>
+              </div>
+              <p class="reporte-admin-lugar"><%= r.ubicacion %> · <%= r.fecha %></p>
+              <p class="reporte-admin-texto"><%= r.descripcion %></p>
+              <% if (r.imagen) { %>
+                <a href="<%= r.imagen %>" target="_blank" class="enlace-imagen">📷 Ver imagen</a>
+              <% } %>
+              <form action="/admin/reportes/<%= r.id %>/estado" method="POST" class="form-estado">
+                <select name="estado" id="estado-<%= r.id %>">
+                  <% estados.forEach(function(e) { %>
+                    <option value="<%= e %>" <%= r.estado === e ? 'selected' : '' %>><%= e %></option>
+                  <% }) %>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">Actualizar</button>
+              </form>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<%- include('parciales/header') %>
+
+<section class="card">
+  <div class="cabecera-titulo">
+    <h1>Todos los reportes</h1>
+    <p><%= reportes.length %> reporte(s)</p>
+  </div>
+
+  <% if (reportes.length === 0) { %>
+    <p class="vacio">No hay reportes registrados todavía.</p>
+  <% } else { %>
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Categoría</th>
+          <th>Ubicación</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% reportes.forEach(function(r) { %>
+          <tr onclick="window.location='/reportes/<%= r.id %>'">
+            <td><%= r.id %></td>
+            <td><%= r.categoria %></td>
+            <td><%= r.ubicacion %></td>
+            <td class="texto-corto"><%= r.descripcion %></td>
+            <td><span class="estado estado-<%= r.estado.toLowerCase().replace(/ /g, '-') %>"><%= r.estado %></span></td>
+            <td><%= r.fecha %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</section>
+
+<%- include('parciales/footer') %>

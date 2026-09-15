@@ -1,0 +1,29 @@
+<%- include('parciales/header') %>
+
+<section class="card detalle">
+  <div class="cabecera-titulo">
+    <h1>Reporte #<%= reporte.id %></h1>
+    <span class="estado estado-<%= reporte.estado.toLowerCase().replace(/ /g, '-') %>"><%= reporte.estado %></span>
+  </div>
+
+  <dl class="detalle-info">
+    <dt>Categoría</dt>
+    <dd><%= reporte.categoria %></dd>
+    <dt>Ubicación</dt>
+    <dd><%= reporte.ubicacion %></dd>
+    <dt>Fecha de reporte</dt>
+    <dd><%= reporte.fecha %></dd>
+    <dt>Descripción</dt>
+    <dd><%= reporte.descripcion %></dd>
+  </dl>
+
+  <% if (reporte.imagen) { %>
+    <div class="detalle-imagen">
+      <img src="<%= reporte.imagen %>" alt="Imagen del reporte">
+    </div>
+  <% } %>
+
+  <a href="/reportes" class="btn btn-secondary">Volver a la lista</a>
+</section>
+
+<%- include('parciales/footer') %>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Reporte Escolar</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">🏫 Reporte Escolar</a>
+    </div>
+  </header>
+  <main class="container">
+    <section class="card login-box">
+      <h1>Acceso de administrador</h1>
+      <% if (typeof error !== 'undefined') { %>
+        <p class="alerta"><%= error %></p>
+      <% } %>
+      <form action="/admin/login" method="POST" class="form">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" name="usuario" placeholder="admin" required>
+
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" placeholder="********" required>
+
+        <button type="submit" class="btn btn-primary">Entrar</button>
+      </form>
+      <p class="texto-ayuda">Usuario: admin | Contraseña: admin123</p>
+    </section>
+  </main>
+</body>
+</html>

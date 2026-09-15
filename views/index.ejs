@@ -1,0 +1,55 @@
+<%- include('parciales/header') %>
+
+<section class="card hero">
+  <h1>Reporta un problema en tu escuela</h1>
+  <p>Ayuda a mejorar tu escuela. Reporta cualquier problema en menos de un minuto.</p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Nuevo reporte</h2>
+    <form action="/reportes" method="POST" enctype="multipart/form-data" class="form">
+      <label for="categoria">Categoría</label>
+      <select name="categoria" id="categoria" required>
+        <option value="">Selecciona una categoría</option>
+        <% categorias.forEach(function(c) { %>
+          <option value="<%= c %>"><%= c %></option>
+        <% }) %>
+      </select>
+
+      <label for="ubicacion">Ubicación (edificio o salón)</label>
+      <input type="text" id="ubicacion" name="ubicacion" placeholder="Ej: Edificio A, salón 204" required>
+
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="5" placeholder="Describe el problema" required></textarea>
+
+      <label for="imagen">Imagen (opcional)</label>
+      <input type="file" id="imagen" name="imagen" accept="image/*">
+
+      <button type="submit" class="btn btn-primary">Enviar reporte</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Reportes recientes</h2>
+    <% if (reportes.length === 0) { %>
+      <p class="vacio">Aún no hay reportes. ¡Sé el primero en reportar!</p>
+    <% } else { %>
+      <ul class="lista-reportes">
+        <% reportes.forEach(function(r) { %>
+          <li>
+            <a href="/reportes/<%= r.id %>">
+              <span class="categoria"><%= r.categoria %></span>
+              <span class="ubicacion"><%= r.ubicacion %></span>
+              <span class="estado estado-<%= r.estado.toLowerCase().replace(/ /g, '-') %>"><%= r.estado %></span>
+              <span class="fecha"><%= r.fecha %></span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <a href="/reportes" class="btn btn-secondary">Ver todos los reportes</a>
+  </section>
+</div>
+
+<%- include('parciales/footer') %>
